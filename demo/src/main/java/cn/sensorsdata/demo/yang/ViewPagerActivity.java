@@ -8,6 +8,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.ViewGroup;
 
+import com.sensorsdata.analytics.android.sdk.ScreenAutoTracker;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +21,7 @@ import cn.sensorsdata.demo.fragment.HomeFragment;
 import cn.sensorsdata.demo.fragment.MineFragment;
 import cn.sensorsdata.demo.fragment.MyFragment;
 
-public class ViewPagerActivity extends AppCompatActivity {
+public class ViewPagerActivity extends BaseActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,4 +62,6 @@ public class ViewPagerActivity extends AppCompatActivity {
         viewPager.setAdapter(pagerAdapter);
 
     }
+
+
 }

@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,6 +29,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
+import com.growingio.android.sdk.collection.GrowingIO;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.SensorsDataIgnoreTrackAppClick;
 import com.sensorsdata.analytics.android.sdk.SensorsDataIgnoreTrackAppViewScreen;
@@ -50,6 +52,7 @@ public class AutoTrackActivity extends BaseActivity implements View.OnClickListe
         if (Build.VERSION.SDK_INT>11)setActionBar();
         initView();
         initListView();
+        GrowingIO.getInstance().setUserId("789");
         //DialogFragment
 
     }
@@ -140,9 +143,11 @@ public class AutoTrackActivity extends BaseActivity implements View.OnClickListe
     // @SensorsDataIgnoreTrackOnClick
     @Override
     public void onClick(View v) {
+
+
         switch (v.getId()) {
             case R.id.button_autotrack:
-
+                Log.e("SA.Sen","_____ shuzhu ____: "+android.os.Process.myPid()+" | sharedInstance"+SensorsDataAPI.sharedInstance().hashCode());
                 Toast.makeText(this, "" +
                         "已尝试向Sensors Analytics发送track事件\n" +
                         "事件名为:$AppClick\n" +

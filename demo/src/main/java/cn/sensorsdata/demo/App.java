@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.app.IntentService;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -20,6 +22,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.alibaba.android.arouter.launcher.ARouter;
@@ -31,21 +34,33 @@ import com.crashlytics.android.Crashlytics;
 import com.facebook.stetho.Stetho;
 import com.growingio.android.sdk.collection.Configuration;
 import com.growingio.android.sdk.collection.GrowingIO;
+import com.growingio.android.sdk.deeplink.DeeplinkCallback;
 import com.igexin.sdk.PushManager;
 import com.qihoo360.replugin.RePlugin;
+import com.qihoo360.replugin.RePluginConfig;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.exceptions.InvalidDataException;
 //import com.squareup.leakcanary.LeakCanary;
 import com.sensorsdata.analytics.android.sdk.util.SensorsDataUtils;
+import com.tencent.android.tpush.XGIOperateCallback;
+import com.tencent.android.tpush.XGPushConfig;
+import com.tencent.android.tpush.XGPushManager;
 import com.tendcloud.tenddata.TCAgent;
-import com.umeng.analytics.MobclickAgent;
+
 
 import com.umeng.commonsdk.UMConfigure;
+import com.umeng.message.IUmengRegisterCallback;
+import com.umeng.message.PushAgent;
+import com.umeng.message.UTrack;
+import com.umeng.message.UmengMessageHandler;
+import com.umeng.message.UmengNotificationClickHandler;
+import com.umeng.message.entity.UMessage;
 import com.xiaomi.channel.commonutils.logger.LoggerInterface;
 import com.xiaomi.mipush.sdk.Logger;
 import com.xiaomi.mipush.sdk.MiPushClient;
 
 
+import org.android.agoo.xiaomi.MiPushRegistar;
 import org.apache.httpcore.HttpRequest;
 import org.apache.httpcore.HttpResponse;
 import org.apache.httpcore.protocol.HttpContext;
@@ -79,6 +94,7 @@ import cn.sensorsdata.demo.util.AppInfoUtil;
 import cn.sensorsdata.demo.util.EmulatorUtils;
 import cn.sensorsdata.demo.util.LogcatUtil;
 import cn.sensorsdata.demo.util.NetUtils;
+import cn.sensorsdata.demo.util.SFUtils;
 import cn.sensorsdata.demo.yang.MyIntentService;
 import io.fabric.sdk.android.Fabric;
 
@@ -100,14 +116,13 @@ import com.yanzhenjie.permission.PermissionListener;
 public class App extends MultiDexApplication {
 
 
-
     /**
      * Sensors Analytics 采集数据的地址
      */
-    //private   String SA_SERVER_URL = "http://192.168.8.252:8888/sa?";
-    private   String SA_Q = "https://sensorsfocoustest.datasink.sensorsdata.cn/sa?project=default&token=6c6afc3d52a85ad3";
+   // private   String SA_SERVER_URL = "https://www.com/global/sensors/sa/?project=test";
+    private String SA_Q = "https://sensorsfocoustest.datasink.sensorsdata.cn/sa?project=default&token=6c6afc3d52a85ad3";
 
-    private final static String SA_SERVER_URL = "http://sdk-test.cloud.sensorsdata.cn:8006/sa?project=yangzhankun&token=95c73ae661f85aa0";
+    private final static String SA_SERVER_URL = "https://sdktest.datasink.sensorsdata.cn/sa?project=yangzhankun&token=21f2e56df73988c7";
     //分析师环境
 
     /**
@@ -122,9 +137,10 @@ public class App extends MultiDexApplication {
      * SensorsDataAPI.DebugMode.DEBUG_AND_TRACK - 打开 Debug 模式，校验数据，并将数据导入到 Sensors Analytics 中
      * 注意！请不要在正式发布的 App 中使用 Debug 模式！
      */
-    private  SensorsDataAPI.DebugMode SA_DEBUG_MODE = SensorsDataAPI.DebugMode.DEBUG_AND_TRACK;
+    private SensorsDataAPI.DebugMode SA_DEBUG_MODE = SensorsDataAPI.DebugMode.DEBUG_AND_TRACK;
 
     public static final boolean cZ = Log.isLoggable("ChineseAllReader", Log.VERBOSE);
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -138,20 +154,22 @@ public class App extends MultiDexApplication {
         RePlugin.App.onCreate();
 
 
-        Log.e(TAG,"onCreate");
+
+        Log.e(TAG, "onCreate");
         // 初始化神策sdk
         initSensorsDataAPI();
-        Log.e(TAG,"onCreate SDK OK");
+        Log.e(TAG, "onCreate SDK OK");
+        // 信鸽
+        initXinGe();
 
+        initGio();
+        initUMeng();
         if (shouldInit()) {
-
-
+            //initSensorsDataAPI();
             intARouter();
             initCrashlytics();
-
             Stetho.initializeWithDefaults(this);
 
-            initUMeng();
             //initSensorsDataAPI();
             initJGPush();
             initXMPush();
@@ -159,18 +177,33 @@ public class App extends MultiDexApplication {
             initGTPush();
             initLitepal(this);
             //initLeakCanary();
-            initGio();
+
             //initTalkingData();
-
-
             //sensors();
             initAMap();
-
             //侧滑
-            BGASwipeBackHelper.init(this,  null);
+            BGASwipeBackHelper.init(this, null);
         }
 
 
+    }
+
+    private void initXinGe() {
+        XGPushConfig.enableDebug(this,true);
+        // 多进程初始化，这里会回调多次，发现注释掉 registerPush ，receiver 中也不回调了。。。
+        XGPushManager.registerPush(this,new XGIOperateCallback(){
+
+            @Override
+            public void onSuccess(Object token, int i) {
+                // token在设备卸载重装的时候有可能会变
+                Log.d("信鸽", "注册成功，设备token为：" + token);
+            }
+
+            @Override
+            public void onFail(Object o, int i, String s) {
+                Log.d("信鸽", "注册失败：" + i +"  ,"+s);
+            }
+        });
     }
 
 
@@ -182,13 +215,17 @@ public class App extends MultiDexApplication {
         //转换 Debug 模式
         checkDebugType();
 
+        //SensorsDataAPI.sharedInstance(this,new SAConfigOptions(isDebugMode(this)?SA_SERVER_URL_DEBUG:SA_SERVER_URL_RELEASE));
+
+        //SensorsDataAPI.sharedInstance(this,new SAConfigOptions(BuildConfig.DEBUG?SA_SERVER_URL:""));
+
         //初始化SDK
         SensorsDataAPI.sharedInstance(
                 this,                        // 传入 Context
-                SA_Q,                      // 数据接收的 URL
+                SA_SERVER_URL,                      // 数据接收的 URL
                 SA_DEBUG_MODE);                     // Debug 模式选项
 
-       // SensorsDataAPI.sharedInstance().identify("RTTTTss58FFss+====");
+        // SensorsDataAPI.sharedInstance().identify("RTTTTss58FFss+====");
         //设置公共属性
         try {
             SensorsDataAPI.sharedInstance().registerSuperProperties(new JSONObject().put("emulator", EmulatorUtils.isEmulator(this)));
@@ -203,8 +240,11 @@ public class App extends MultiDexApplication {
         eventTypeList.add(SensorsDataAPI.AutoTrackEventType.APP_CLICK);
         eventTypeList.add(SensorsDataAPI.AutoTrackEventType.APP_VIEW_SCREEN);
         SensorsDataAPI.sharedInstance().enableAutoTrack(eventTypeList);
+        //SensorsDataAPI.sharedInstance().trackFragmentAppViewScreen();
         //开启调试日志
         SensorsDataAPI.sharedInstance().enableLog(true);
+        //初始化 SDK 之后，开启可视化全埋点, 在采集 $AppClick 事件时会记录 View 的 ViewPath
+        SensorsDataAPI.sharedInstance().enableVisualizedAutoTrack();
 
         // 关闭点击分析的提示框
         //SensorsDataAPI.sharedInstance().enableAppHeatMapConfirmDialog(false);
@@ -221,49 +261,13 @@ public class App extends MultiDexApplication {
 
         //设置 GPS
         //SensorsDataAPI.sharedInstance().setGPSLocation(1,1);
-        JSONObject presetProperties=SensorsDataAPI.sharedInstance().getPresetProperties();
-
-
-
-
-
-
-        String str=null;
-        //Log.i(TAG,SensorsDataAPI.sharedInstance().getPresetProperties().toString());
-
-
-
-
-
-//        try {
-//            JSONObject properties =new JSONObject();
-//            properties.put("word_1","qwer");
-//            properties.put("word_2","qwer");
-//            properties.put("word_3","qwer");
-//            properties.put("word_4","qwer");
-//            properties.put("word_5","qwer");
-//            properties.put("word_6","qwer");
-//            properties.put("word_7","qwer");
-//            Log.i(TAG+"#####:",properties.toString());
-//            SensorsDataAPI.sharedInstance().registerSuperProperties(properties);
-//            Log.i(TAG+"#####:",SensorsDataAPI.sharedInstance().getSuperProperties().toString());
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-
-
-
-//        Intent intent=new Intent(this,MyIntentService.class);
-//        startService(intent);
+        JSONObject presetProperties = SensorsDataAPI.sharedInstance().getPresetProperties();
 
 
         //SensorsDataAPI.sharedInstance().enableEditingVTrack();
         //开启热力图
-        SensorsDataAPI.sharedInstance(this).enableHeatMap();
+        SensorsDataAPI.sharedInstance().enableHeatMap();
         //SensorsDataAPI.sharedInstance(this).addHeatMapActivity(MainActivity.class);
-
-
-
 
         // 设置动态公共属性
         SensorsDataAPI.sharedInstance().registerDynamicSuperProperties(new SensorsDataDynamicSuperProperties() {
@@ -272,7 +276,7 @@ public class App extends MultiDexApplication {
                 try {
                     // 比如 isLogin() 是用于获取用户当前的登录状态，通过 registerDynamicSuperProperties 就可以把用户当前的登录状态，添加到触发的埋点事件中。
                     boolean bool = isLogin();
-                    return new JSONObject().put("isLogin",bool);
+                    return new JSONObject().put("isLogin", bool);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -280,7 +284,7 @@ public class App extends MultiDexApplication {
             }
         });
 
-        SensorsDataAPI.sharedInstance().deleteAll();
+       // SensorsDataAPI.sharedInstance().deleteAll();
 
 
     }
@@ -297,33 +301,31 @@ public class App extends MultiDexApplication {
     }
 
 
-
-
     /**
      * 定位
      */
     //声明AMapLocationClient类对象
-    public  AMapLocationClient mLocationClient = null;
+    public AMapLocationClient mLocationClient = null;
     //声明定位回调监听器
     public AMapLocationListener mLocationListener = new AMapLocationListener() {
         @Override
         public void onLocationChanged(AMapLocation aMapLocation) {
-            if(aMapLocation!=null){
+            if (aMapLocation != null) {
 //                aMapLocation.getLatitude();//获取纬度
 //                aMapLocation.getLongitude();//获取经度
-               // Log.i(TAG,"AMapLocationListener"+aMapLocation.getAddress()+":"+aMapLocation.getLocationType());
-               // Log.i(TAG,"AMapLocationListener"+aMapLocation.getLatitude()+":"+aMapLocation.getLongitude());
+                // Log.i(TAG,"AMapLocationListener"+aMapLocation.getAddress()+":"+aMapLocation.getLocationType());
+                // Log.i(TAG,"AMapLocationListener"+aMapLocation.getLatitude()+":"+aMapLocation.getLongitude());
                 //SensorsDataAPI.sharedInstance().setGPSLocation(aMapLocation.getLatitude(),aMapLocation.getLongitude());
 
 
                 if (aMapLocation.getErrorCode() == 0) {
                     //可在其中解析amapLocation获取相应内容。
-                    String city=aMapLocation.getCity();//城市信息
-                    if(!TextUtils.isEmpty(city)){
-                       // Log.e(TAG,"gaode"+city);
+                    String city = aMapLocation.getCity();//城市信息
+                    if (!TextUtils.isEmpty(city)) {
+                        // Log.e(TAG,"gaode"+city);
 
                     }
-                }else {
+                } else {
                     //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
 //                    Log.e("AMapError","location Error, ErrCode:"
 //                            + aMapLocation.getErrorCode() + ", errInfo:"
@@ -336,7 +338,8 @@ public class App extends MultiDexApplication {
         }
     };
     //声明AMapLocationClientOption对象
-    public  AMapLocationClientOption mLocationOption = null;
+    public AMapLocationClientOption mLocationOption = null;
+
     private void initAMap() {
         //初始化定位
         mLocationClient = new AMapLocationClient(getApplicationContext());
@@ -368,31 +371,53 @@ public class App extends MultiDexApplication {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-        RePlugin.App.attachBaseContext(this);
+        //RePlugin.App.attachBaseContext(this);
+        RePlugin.App.attachBaseContext(this,
+                new RePluginConfig()
+                        .setPrintDetailLog(true)
+                        .setUseHostClassIfNotFound(true));
+
     }
 
     private void initTalkingData() {
         TCAgent.setReportUncaughtExceptions(false);
-        TCAgent.LOG_ON=true;
+        TCAgent.LOG_ON = true;
         // App ID: 在TalkingData创建应用后，进入数据报表页中，在“系统设置”-“编辑应用”页面里查看App ID。
         // 渠道 ID: 是渠道标识符，可通过不同渠道单独追踪数据。
         TCAgent.init(this, "A1093941946740739F0EDEDA6A1B3E44", "XX渠道");
         //设置反作弊
-        TCAgent.setAntiCheatingEnabled(this,true);
+        TCAgent.setAntiCheatingEnabled(this, true);
         TCAgent.setGlobalKV("platform", "Android");
-        TCAgent.onEvent(this,"yang","app_start");
+        TCAgent.onEvent(this, "yang", "app_start");
         Map kv = new HashMap();
         kv.put("商品类型", "休闲食品");
-        kv.put("价格","5～10元" );
+        kv.put("价格", "5～10元");
         TCAgent.onEvent(this, "点击首页推荐位", "第3推广位", kv);
 
     }
 
+    /**
+     * GIO
+     */
     private void initGio() {
         GrowingIO.startWithConfiguration(this, new Configuration()
-                .useID()
                 .trackAllFragments()
-                .setChannel("XXX应用商店"));
+                .setChannel("XXX应用商店")
+                .setMutiprocess(true)
+                .setDebugMode(true)
+                .setTestMode(true)
+                .enablePushTrack()// 推送
+                .setTrackWebView(true)// 采集所有 WebView
+                .setHashTagEnable(true) // 采集 WebView 页面锚点（单页面）
+                .setDeeplinkCallback(new DeeplinkCallback() {
+                    @Override
+                    public void onReceive(Map<String, String> map, int i) {
+                        //
+                        Log.e("yzk",map.toString()+"");
+                    }
+                })
+
+        );
     }
 
     //private void initLeakCanary() {
@@ -413,19 +438,16 @@ public class App extends MultiDexApplication {
     }
 
 
-
-
     private Boolean isLogin;
-
 
 
     /**
      * 获取应用程序名称
      */
-    public static String getAppName(Context context){
+    public static String getAppName(Context context) {
         try {
-            PackageManager packageManager=context.getPackageManager();
-            PackageInfo packageInfo=packageManager.getPackageInfo(context.getPackageName(),0);
+            PackageManager packageManager = context.getPackageManager();
+            PackageInfo packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
             int labelRes = packageInfo.applicationInfo.labelRes;
             return context.getResources().getString(labelRes);
         } catch (PackageManager.NameNotFoundException e) {
@@ -433,8 +455,6 @@ public class App extends MultiDexApplication {
         }
         return null;
     }
-
-
 
 
     /**
@@ -496,33 +516,183 @@ public class App extends MultiDexApplication {
         Logger.setLogger(this, newLogger);
     }
 
+
+    private void dealSFAction(String pushContent) {
+        if (TextUtils.isEmpty(pushContent)) {
+            return;
+        }
+        try {
+            String sfData = new JSONObject(pushContent).optString("sf_data");
+            if (TextUtils.isEmpty(sfData)) {
+                return;
+            }
+            JSONObject sfJson = new JSONObject(sfData);
+            // TODO 解析 customized 中的字段，做页面跳转
+            Log.e(TAG,   sfJson.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 神策 SF 处理推送消息，做页面跳转 示例
+     *
+     * @param pushContent  推送消息的 msg.extra
+     * @param context context
+     * @return true 表示神策 SF 代码处理了推送消息
+     */
+    public static boolean dealSFAction(Map<String,String> pushContent,Context context) {
+        if (pushContent == null||context == null) {
+            return false;
+        }
+        try {
+            String sfData = new JSONObject(pushContent).optString("sf_data");
+            if (TextUtils.isEmpty(sfData)) {
+                return false;
+            }
+            JSONObject sfJson = new JSONObject(sfData);
+            String custom = sfJson.optJSONObject("customized").optString("custom");
+            if(TextUtils.isEmpty(custom)){
+                return false;
+            }
+            // TODO 解析出需要中的字段，做页面跳转
+            Log.i(TAG,   "---> "+custom);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /**
      * 友盟初始化
      */
+
     private void initUMeng() {
-        MobclickAgent.setScenarioType(this, MobclickAgent.EScenarioType.E_UM_NORMAL);
-        //MobclickAgent.setDebugMode(true);
+        // 小米通道
+        MiPushRegistar.register(this ,"2882303761517543539", "5741754322539");
+        // 友盟初始化
+        UMConfigure.init(this, "58ad5104734be40b8d0017ab", "UUUU", UMConfigure.DEVICE_TYPE_PHONE, "0f361187a425dcd6c167c2cb5be01321");
         UMConfigure.setLogEnabled(true);
 
-        UMConfigure.init(this,"58ad5104734be40b8d0017ab","UUUU" ,UMConfigure.DEVICE_TYPE_PHONE, "0f361187a425dcd6c167c2cb5be01321");
-        //统计事件
+        //获取消息推送代理示例
+        PushAgent mPushAgent = PushAgent.getInstance(this);
+        UmengNotificationClickHandler notificationClickHandler = new UmengNotificationClickHandler() {
+            @Override
+            public void dealWithCustomAction(Context context, UMessage msg) {// TODO 推送消息被点击
+                Toast.makeText(context, msg.custom, Toast.LENGTH_LONG).show();
+                Log.i(TAG,"友盟 消息推送 ：dealWithCustomAction：custom -------->  " + msg.custom);
+                Log.i(TAG,"友盟 消息推送 ：dealWithCustomAction：extra -------->  " + msg.extra);
 
-        HashMap<String,String> map = new HashMap<String,String>();
-        map.put("type","book");
-        map.put("quantity","3");
-        MobclickAgent.onEvent(this, "purchase", map);
+                Intent intent = new Intent(context, UmengActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
 
-        //错误收集
+                // TODO 埋点 App 打开推送消息 事件
+                SFUtils.trackAppOpenNotification(msg.extra, msg.title, msg.text);
 
-        MobclickAgent.setCatchUncaughtExceptions(true);
-        //UMConfigure.init(this, UMConfigure.DEVICE_TYPE_PHONE, "1fe6a20054bcef865eeb0991ee84525b");
+                // TODO 神策 SF 处理推送消息，做页面跳转
+                if(SFUtils.dealSFAction(msg.extra,context)){
+                    return;
+                }
+
+                // 之前的处理推送消息的逻辑，做页面跳转
+                // ……
+
+
+
+
+                Log.i(TAG,"友盟 消息推送 ：dealWithCustomAction：---- end ---->  ");
+
+            }
+
+            @Override
+            public void launchApp(Context context, UMessage msg) {
+                super.launchApp(context, msg);
+                Log.i(TAG,"友盟 消息推送 ：launchApp：-------->  " + msg.custom);
+                Log.i(TAG,"友盟 消息推送 ：launchApp：-------->  " + msg.extra);
+                dealSFAction(msg.extra,context);
+            }
+
+            @Override
+            public void openUrl(Context context, UMessage uMessage) {
+                super.openUrl(context, uMessage);
+            }
+
+            @Override
+            public void openActivity(Context context, UMessage uMessage) {
+                super.openActivity(context, uMessage);
+            }
+
+            @Override
+            public void handleMessage(Context context, UMessage uMessage) {
+                super.handleMessage(context, uMessage);
+            }
+        };
+        mPushAgent.setNotificationClickHandler(notificationClickHandler);
+
+        //处理透传的消息
+        UmengMessageHandler messageHandler = new UmengMessageHandler(){
+
+            @Override
+            public void dealWithCustomMessage(final Context context, final UMessage msg) {
+                Log.i(TAG,"友盟 透传的消息 ：msg：-------->  " + msg.custom);
+                Log.i(TAG,"友盟 透传的消息 ：msg：-------->  " + msg.extra);
+
+                new Handler(getMainLooper()).post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        // 对于自定义消息，PushSDK默认只统计送达。若开发者需要统计点击和忽略，则需手动调用统计方法。
+                        boolean isClickOrDismissed = true;
+                        if(isClickOrDismissed) {
+                            //自定义消息的点击统计
+                            UTrack.getInstance(getApplicationContext()).trackMsgClick(msg);
+                        } else {
+                            //自定义消息的忽略统计
+                            UTrack.getInstance(getApplicationContext()).trackMsgDismissed(msg);
+                        }
+                        Toast.makeText(context, msg.custom, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+            @Override
+            public Notification getNotification(Context context, UMessage uMessage) {
+                return super.getNotification(context, uMessage);
+                //TODO 推送消息到达
+            }
+        };
+
+        mPushAgent.setMessageHandler(messageHandler);
+
+        //注册推送服务，每次调用register方法都会回调该接口
+        mPushAgent.register(new IUmengRegisterCallback() {
+
+            @Override
+            public void onSuccess(String deviceToken) {
+                //注册成功会返回deviceToken deviceToken是推送消息的唯一标志
+                Log.i(TAG,"友盟 注册成功：deviceToken：-------->  " + deviceToken);
+                if(!TextUtils.isEmpty(deviceToken)){
+                    SensorsDataAPI.sharedInstance().profilePushId("xxx",deviceToken);
+                }
+            }
+
+            @Override
+            public void onFailure(String s, String s1) {
+                Log.e(TAG,"友盟 注册失败：-------->  " + "s:" + s + ",s1:" + s1);
+            }
+        });
+
+
+
     }
 
     /**
      * crashlytics 初始化，用于crash收集
      */
     private void initCrashlytics() {
-       // Fabric.with(this, new Crashlytics());
+        // Fabric.with(this, new Crashlytics());
     }
 
     /**
@@ -557,37 +727,34 @@ public class App extends MultiDexApplication {
     /**
      * 记录页面开始
      */
-    private  void trackPageStart(){
+    private void trackPageStart() {
         SensorsDataAPI.sharedInstance().trackTimerBegin("AppPage");//这里定义事件名为AppPage
     }
 
     /**
      * 记录页面关闭
      */
-    private  void trackPageEnd(String pageName){
+    private void trackPageEnd(String pageName) {
         try {
-            JSONObject properties=new JSONObject();
-            if(!TextUtils.isEmpty(pageName)){
-                properties.put("pageName",pageName);
+            JSONObject properties = new JSONObject();
+            if (!TextUtils.isEmpty(pageName)) {
+                properties.put("pageName", pageName);
             }
-            SensorsDataAPI.sharedInstance().trackTimerEnd("AppPage",properties);
+            SensorsDataAPI.sharedInstance().trackTimerEnd("AppPage", properties);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-
-
     /**
      * 从本地读取设置项目ID的值
-     *
      */
-    private int getProjectIDFromSharedPreference(){
+    private int getProjectIDFromSharedPreference() {
 
-        SharedPreferences sharedPreferences= getSharedPreferences("cn.sensorsdata.demo.project",
+        SharedPreferences sharedPreferences = getSharedPreferences("cn.sensorsdata.demo.project",
                 Activity.MODE_PRIVATE);
-        int project =sharedPreferences.getInt("project", 0);
+        int project = sharedPreferences.getInt("project", 0);
         return project;
     }
 
@@ -595,18 +762,18 @@ public class App extends MultiDexApplication {
      * 根据本地保存的DEBUG_ID的值，来切换DEBUG模式
      */
     private void checkDebugType() {
-        int projectID=getProjectIDFromSharedPreference();
-        switch (projectID){
+        int projectID = getProjectIDFromSharedPreference();
+        switch (projectID) {
 
             case 1:
-                SA_DEBUG_MODE= SensorsDataAPI.DebugMode.DEBUG_ONLY;
+                SA_DEBUG_MODE = SensorsDataAPI.DebugMode.DEBUG_ONLY;
                 break;
             case 0:
             case 2:
-                SA_DEBUG_MODE= SensorsDataAPI.DebugMode.DEBUG_AND_TRACK;
+                SA_DEBUG_MODE = SensorsDataAPI.DebugMode.DEBUG_AND_TRACK;
                 break;
             case 3:
-                SA_DEBUG_MODE= SensorsDataAPI.DebugMode.DEBUG_OFF;
+                SA_DEBUG_MODE = SensorsDataAPI.DebugMode.DEBUG_OFF;
                 break;
         }
 
@@ -658,7 +825,7 @@ public class App extends MultiDexApplication {
                 hexString.append(":");
             }
             String result = hexString.toString();
-            return result.substring(0, result.length()-1);
+            return result.substring(0, result.length() - 1);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
@@ -667,9 +834,44 @@ public class App extends MultiDexApplication {
         return null;
     }
 
+    private void aa() {
+
+    }
+
+
+    /**
+     * 获取当前用户的 ID
+     *
+     * @return 优先返回登录 ID，登录 ID 为空时 返回匿名ID
+     */
+    public String getCurrentDistinctId() {
+        String mLoginId = SensorsDataAPI.sharedInstance().getLoginId();
+        if (!TextUtils.isEmpty(mLoginId)) {
+            return mLoginId;
+        } else {
+            return SensorsDataAPI.sharedInstance().getAnonymousId();
+        }
+    }
+
+
+
+    private View mView;
+
+    synchronized public void trackViewAppClick(View view) {
+        mView=view;
+
+    }
+
+
+    synchronized public void trackViewAppClickCallBack() {
+        if(mView!=null){
+            // 触发  $AppClick
+            mView=null;
+        }
+    }
+
 
 }
-
 
 
 //

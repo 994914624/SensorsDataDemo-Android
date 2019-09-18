@@ -25,12 +25,15 @@ public class BaseActivity extends AppCompatActivity implements ScreenAutoTracker
 
     @Override
     public String getScreenUrl() {
-        return null;
+        return "我是 Base ScreenUrl:"+this.getClass().getSimpleName();
     }
 
     @Override
     public JSONObject getTrackProperties() throws JSONException {
-        return null;
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("$title","我是 BaseActivity title");
+        jsonObject.put("$screen_name","我是 BaseActivity screen_name");
+        return jsonObject;
     }
 
     @Override

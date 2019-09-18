@@ -31,7 +31,7 @@
         android:layout_marginLeft="10dp"
         android:drawableRight="@mipmap/right_arrow"
         android:layout_marginRight="10dp"
-        android:text="可视化埋点" />
+        android:text="可视化全埋点" />
     <View
         android:background="#bab8b8"
         android:layout_width="match_parent"
@@ -97,6 +97,35 @@
         android:layout_width="match_parent"
         android:layout_height="0.2dp">
     </View>
+    <TextView
+        android:id="@+id/textView_umeng"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:textSize="20sp"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="10dp"
+        android:drawableRight="@mipmap/right_arrow"
+        android:layout_marginRight="10dp"
+        android:text="友盟推送" />
+    <View
+        android:background="#bab8b8"
+        android:layout_width="match_parent"
+        android:layout_height="0.2dp">
+    </View>
+    <TextView
+        android:id="@+id/textView_xinge"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:textSize="20sp"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="10dp"
+        android:drawableRight="@mipmap/right_arrow"
+        android:layout_marginRight="10dp"
+        android:text="信鸽推送" />
+    <View
+        android:background="#bab8b8"
+        android:layout_width="match_parent"
+        android:layout_height="0.2dp"/>
     <TextView
         android:id="@+id/textView_yang"
         android:layout_width="match_parent"

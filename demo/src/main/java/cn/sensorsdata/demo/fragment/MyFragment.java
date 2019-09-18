@@ -37,6 +37,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.sensorsdata.analytics.android.sdk.ScreenAutoTracker;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAutoTrackAppViewScreenUrl;
 import com.sensorsdata.analytics.android.sdk.SensorsDataTrackEvent;
@@ -56,14 +57,23 @@ import cn.sensorsdata.demo.R;
  * A simple {@link Fragment} subclass.
  */
 @SensorsDataAutoTrackAppViewScreenUrl(url="xxx.myFrg页面")
-public class MyFragment extends BaseFragment implements View.OnClickListener, CompoundButton.OnCheckedChangeListener, AdapterView.OnItemClickListener {
-
-    ExpandableListView mainlistview = null;
-    List<String> parent = null;
-    Map<String, List<String>> map = null;
-    SwitchCompat switchCompat3=null;
+public class MyFragment extends BaseFragment implements View.OnClickListener, CompoundButton.OnCheckedChangeListener, AdapterView.OnItemClickListener,ScreenAutoTracker {
 
 
+
+
+    @Override
+    public String getScreenUrl() {
+        return "我是 MyFragment ScreenUrl:"+this.getClass().getSimpleName();
+    }
+
+    @Override
+    public JSONObject getTrackProperties() throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("$title","我是 MyFragment title");
+        jsonObject.put("$screen_name","我是 MyFragment screen_name");
+        return jsonObject;
+    }
     private View view = null;
     private Context context=null;
     public MyFragment() {
@@ -82,6 +92,12 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
         return view;
     }
 
+
+    ExpandableListView mainlistview = null;
+    List<String> parent = null;
+    Map<String, List<String>> map = null;
+    SwitchCompat switchCompat3=null;
+
     private void initSwitchCompat() {
 
         /**
@@ -89,6 +105,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
          */
 
         final SwitchCompat switchCompat= (SwitchCompat)view.findViewById(R.id.switchCompat);
+
         switchCompat.setOnClickListener(new View.OnClickListener() {
             @Override
             @TargetApi(14)
@@ -98,15 +115,20 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
                 switchCompat.setChecked(switchCompat.isChecked());
             }
         });
+        switchCompat.setChecked(true);
 
         SwitchCompat switchCompat2= (SwitchCompat)view.findViewById(R.id.switchCompat2);
+
         switchCompat2.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 Toast.makeText(context,"sc",Toast.LENGTH_SHORT).show();
             }
         });
+        switchCompat2.setChecked(true);
+
         switchCompat3= (SwitchCompat)view.findViewById(R.id.switchCompat3);
+
         switchCompat3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -115,7 +137,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
                 Toast.makeText(context,""+switchCompat3.isChecked(),Toast.LENGTH_SHORT).show();
             }
         });
-
+        switchCompat3.setChecked(true);
 
         /*
          *context menu
@@ -160,7 +182,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
         String[] mItems = {"北京", "上海", "深圳", "美国", "清华"};
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, mItems);
         spinner.setAdapter(adapter);
-        spinner.setSelection(0,false);
+        //spinner.setSelection(0,false);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -194,6 +216,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
 //            }
 //        });
 
+        toggleButton.setChecked(true);
         toggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -204,6 +227,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
 
         ToggleButton toggle2= (ToggleButton)view.findViewById(R.id.toggleButton2);
 
+
         toggle2.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -212,6 +236,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
 
             }
         });
+        toggle2.setChecked(true);
 
 
 
@@ -226,17 +251,19 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
             }
         });
 
+        checkedTextView.setChecked(true);
 
         /*
          *CheckBox、RadioButton
          */
-        CheckBox checkBox = (CheckBox)view.findViewById(R.id.yang_checkBox);
+        final CheckBox checkBox = (CheckBox)view.findViewById(R.id.yang_checkBox);
         CheckBox checkBox000 = (CheckBox)view.findViewById(R.id.yang_checkBox000);
         RadioButton radioButton = (RadioButton)view.findViewById(R.id.yang_radioButton);
         RadioButton radioButton000 = (RadioButton)view.findViewById(R.id.yang_radioButton000);
         RadioButton radioButton111 = (RadioButton)view.findViewById(R.id.yang_radioButton111);
         RadioButton radioButton01 = (RadioButton)view.findViewById(R.id.yang_radioButton01);
         RadioButton radioButton02 = (RadioButton)view.findViewById(R.id.yang_radioButton02);
+
 
         RadioGroup radioGroup = (RadioGroup)view.findViewById(R.id.yang_RadioGroup);
         RadioGroup radioGroup222 = (RadioGroup)view.findViewById(R.id.radio_group222);
@@ -247,6 +274,8 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
                 Toast.makeText(context, "rg" + i, Toast.LENGTH_SHORT).show();
             }
         });
+
+
         radioGroup222.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
@@ -260,6 +289,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
 //        radioButton02.setOnCheckedChangeListener(this);
 
         radioButton000.setOnClickListener(this);
+        radioButton000.setChecked(true);
         radioButton111.setOnCheckedChangeListener(this);
 
         checkBox000.setOnClickListener(this);
@@ -270,7 +300,7 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
             }
         });
 
-        //checkBox.setChecked();
+        checkBox.setChecked(true);
 
 
         /*
@@ -281,7 +311,12 @@ public class MyFragment extends BaseFragment implements View.OnClickListener, Co
         ImageView imageView = (ImageView)view.findViewById(R.id.yang_imageView);
         ImageButton imageButton = (ImageButton)view.findViewById(R.id.yang_imageButton);
 
-        button.setOnClickListener(this);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkBox.setChecked(true);
+            }
+        });
         textView.setOnClickListener(this);
         imageButton.setOnClickListener(this);
         imageView.setOnClickListener(this);

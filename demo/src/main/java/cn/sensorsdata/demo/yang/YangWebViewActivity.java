@@ -38,7 +38,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
 
-import cn.jpush.android.data.c;
+//import cn.jpush.android.data.c;
 import cn.sensorsdata.demo.R;
 import cn.sensorsdata.demo.bean.TestToJS;
 
@@ -80,9 +80,10 @@ public class YangWebViewActivity extends BaseActivity {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
+        SensorsDataAPI.sharedInstance().track("AppH5");
 
         //打通App和H5
-        //SensorsDataAPI.sharedInstance().showUpWebView(webView,true);
+        //SensorsDataAPI.sharedInstance().showUpWebView(webView,true,false);
 
 
         ll_webview_container = (LinearLayout) findViewById(R.id.ll_webView_container);
@@ -126,8 +127,8 @@ public class YangWebViewActivity extends BaseActivity {
             public void onPageFinished(WebView view, String url) {
 
                 //注入 JavaScript SDK 代码
-                injectSensorsDataJSSDK();
-                //webView.loadUrl("javascript:"+JS_CODE);
+                webView.loadUrl("javascript:"+JS_CODE);
+               // webView.loadUrl("javascript:"+JS_CODE_2);
                 //设定加载结束的操作
             }
 
@@ -207,7 +208,7 @@ public class YangWebViewActivity extends BaseActivity {
         webView.addJavascriptInterface(new TestToJS(this),"test");
 
         //webView.loadUrl("https://github.com/994914624/py/blob/master/web/templates/jssdk.html");
-        //webView.loadUrl("file:///android_asset/JS_SDK_test.html");
+       // webView.loadUrl("file:///android_asset/JS_SDK_test.html");
         webView.loadUrl("file:///android_asset/index.html");
         //webView.loadUrl("https://rp.yypt.com/redpacket/applycard.do?no=ACT0000004201");
 
@@ -257,7 +258,7 @@ public class YangWebViewActivity extends BaseActivity {
 
 
 
-    private final static String JS_CODE = "(function(para) {\n" +
+    private final static String JS_CODE = "if(!window.sensors){(function(para) {\n" +
             "  var p = para.sdk_url, n = para.name, w = window, d = document, s = 'script',x = null,y = null;\n" +
             "  w['sensorsDataAnalytic201505'] = n;\n" +
             "  w[n] = w[n] || function(a) {return function() {(w[n]._q = w[n]._q || []).push([a, arguments]);}};\n" +
@@ -274,14 +275,81 @@ public class YangWebViewActivity extends BaseActivity {
             "    w[n].para = para;\n" +
             "  }\n" +
             "})({\n" +
-            "  sdk_url: 'https://static.sensorsdata.cn/sdk/test/test2.js?5',\n" +
-            "  heatmap_url: 'https://static.sensorsdata.cn/sdk/1.9.13/heatmap.min.js',\n" +
-            "  name: 'sa',\n" +
+            "  sdk_url: 'http://static.sensorsdata.cn/sdk/1.12.10/sensorsdata.min.js',\n" +
+            "  heatmap_url: 'https://static.sensorsdata.cn/sdk/1.12.10/heatmap.min.js',\n" +
+            "  name: 'sensors',\n" +
             "  use_app_track:true,\n"+
-            "  web_url: 'https://test2-zouyuhan.cloud.sensorsdata.cn/?project=yangzhankun',\n" +
-            "  server_url: 'https://test2-zouyuhan.cloud.sensorsdata.cn:4006/sa?token=386e4bed00b5701e&project=yangzhankun',\n" +
+            "  server_url: 'http://sdk-test.cloud.sensorsdata.cn:8006/sa?project=yangzhankun&token=95c73ae661f85aa0',\n" +
             "  heatmap:{}\n" +
             "});\n" +
+            "sensors.quick('autoTrack');" +
+            "}\n" +
+            "else\n" +
+            "{ \n" +
+            "if(sensors.para.server_url != 'http://sdk-test.datasink.sensorsdata.cn/sa?project=YangYang&token=95c73ae661f85aa0'){" +
+            "sensors.track('woca');\n" +
+            "sensors.para.server_url=['http://sdk-test.datasink.sensorsdata.cn/sa?project=YangYang&token=95c73ae661f85aa0',sensors.para.server_url];\n" +
+            "console.log('--------------dddd-----');" +
+            "sensors.track('woca2');\n" +
+            "sensors.quick('autoTrack');"+
+
+            "}\n" +
+            "}";
+
+
+
+
+    private final static String JS_CODE_2 ="if(window.sensors){ " +
+            "if(sensors.para.server_url != 'http://sdk-test.datasink.sensorsdata.cn/sa?project=YangYang&token=95c73ae661f85aa0'){" +
+            "(function(para) {\n" +
+            "  var p = para.sdk_url, n = para.name, w = window, d = document, s = 'script',x = null,y = null;\n" +
+            "  if(typeof(w['sensorsDataAnalytic201505']) !== 'undefined') {\n" +
+            "      return false;\n" +
+            "  }\n" +
+            "  w['sensorsDataAnalytic201505'] = n;\n" +
+            "  w[n] = w[n] || function(a) {return function() {(w[n]._q = w[n]._q || []).push([a, arguments]);}};\n" +
+            "  var ifs = ['track','quick','register','registerPage','registerOnce','trackSignup', 'trackAbtest', 'setProfile','setOnceProfile','appendProfile', 'incrementProfile', 'deleteProfile', 'unsetProfile', 'identify','login','logout','trackLink','clearAllRegister','getAppStatus'];\n" +
+            "  for (var i = 0; i < ifs.length; i++) {\n" +
+            "    w[n][ifs[i]] = w[n].call(null, ifs[i]);\n" +
+            "  }\n" +
+            "  if (!w[n]._t) {\n" +
+            "    x = d.createElement(s), y = d.getElementsByTagName(s)[0];\n" +
+            "    x.async = 1;\n" +
+            "    x.src = p;\n" +
+            "    x.setAttribute('charset','UTF-8');\n" +
+            "    y.parentNode.insertBefore(x, y);\n" +
+            "    w[n].para = para;\n" +
+            "  }\n" +
+            "})({\n" +
+            "  sdk_url: 'http://static.sensorsdata.cn/sdk/1.12.18/sensorsdata.min.js',\n" +
+            "  heatmap_url: 'http://static.sensorsdata.cn/sdk/1.12.18/heatmap.min.js',\n" +
+            "  name: 'sensors222',\n" +
+            "  use_app_track:true,\n" +
+            "  server_url: 'http://sdk-test.datasink.sensorsdata.cn/sa?token=95c73ae661f85aa0&project=yangzhankun',\n" +
+            "  heatmap:{}\n" +
+            "});\n" +
+            "sensors222.quick('autoTrack');\n" +
+            "sensors222.track('woca2');" +
+            "}\n" +
+            "}\n";
+
+
+    private final static String JS_CODE_SYNC = "(function(para) {\n" +
+            "  var n = para.name;\n" +
+            "  window['sensorsDataAnalytic201505'] = n;\n" +
+            "  window[n] = {\n" +
+            "    _q: [],\n" +
+            "    para: para\n" +
+            "  };\n" +
+            "})({\n" +
+            "    sdk_url: 'http://static.sensorsdata.cn/sdk/1.10.4/sensorsdata.min.js',\n" +
+            "  name: 'sa',\n" +
+            "  use_app_track:true,\n" +
+            "  server_url: 'http://sdk-test.cloud.sensorsdata.cn:8006/sa?project=yangzhankun&token=95c73ae661f85aa0'\n" +
+            "});\n" +
+            "</script>\n" +
+            "\t<script src=\"http://static.sensorsdata.cn/sdk/1.10.4/sensorsdata.min.js\"></script>\n" +
+            "\t<script>\n" +
             "sa.quick('autoTrack');";
 
 

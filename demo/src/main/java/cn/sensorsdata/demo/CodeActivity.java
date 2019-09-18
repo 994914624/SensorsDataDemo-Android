@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
+import com.growingio.android.sdk.collection.GrowingIO;
 import com.igexin.sdk.PushManager;
 import com.qihoo360.replugin.RePlugin;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
@@ -61,8 +62,9 @@ public class CodeActivity extends BaseActivity implements View.OnClickListener {
         //由于此页面演示代码埋点，所以忽略此页面的全埋点采集
         SensorsDataAPI.sharedInstance(this).ignoreAutoTrackActivity(CodeActivity.class);
 
-        cryptInit(this);
-        String str=null;
+        //GrowingIO.getInstance().setUserId("123");
+        //cryptInit(this);
+        //String str=null;
        // Log.i("CodeActivity",str.toString());
 
 //        try {
@@ -82,7 +84,7 @@ public class CodeActivity extends BaseActivity implements View.OnClickListener {
 
 
         //打开内部插件apk
-        //RePlugin.startActivity(this, RePlugin.createIntent("com.yang.testapp2", "com.yang.testapp2.MainActivity"));
+       // RePlugin.startActivity(this, RePlugin.createIntent("com.yang.testapp2", "com.yang.testapp2.MainActivity"));
 
 
     }
@@ -231,8 +233,10 @@ public class CodeActivity extends BaseActivity implements View.OnClickListener {
     private void login() {
         String loginId = (int) (Math.random() * (100000 - 11111) + 11111) + "";//这里随机生成11111~99999作为登录Id
         try {
-            SensorsDataAPI.sharedInstance(this).login(loginId);
-            //SensorsDataAPI.sharedInstance(this).trackSignUp(loginId);
+
+            SensorsDataAPI.sharedInstance().login(loginId);
+            // login 方法后，将推送 ID 保存到用户表 jgId 中（这里的 jgId 只是一个示例字段）
+            SensorsDataAPI.sharedInstance().profilePushId("jgId", JPushInterface.getRegistrationID(this));
 
             // 注册成功 / 登录成功 后 保存 jgId 到用户表
             JSONObject properties = new JSONObject();

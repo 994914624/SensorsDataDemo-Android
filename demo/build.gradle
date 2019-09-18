@@ -5,11 +5,6 @@ apply plugin: 'com.sensorsdata.analytics.android'
 
 apply plugin: 'kotlin-android'
 
-
-
-
-
-
 //应用 Bugtags 插件
 //apply plugin: 'com.bugtags.library.plugin'
 //realm  此插件会和神策插件冲突，也会和ARouter冲突
@@ -25,7 +20,9 @@ apply plugin: 'org.greenrobot.greendao'
 //apply plugin: 'kotlin-android-extensions'
 //apply plugin: 'kotlin-kapt'
 
-//gio 此插件会和神策插件冲突
+////gio 此插件会和神策插件冲突
+//apply plugin: 'com.growingio.android'
+//添加插件
 apply plugin: 'com.growingio.android'
 
 //RePlugin
@@ -33,7 +30,6 @@ apply plugin: 'replugin-host-gradle'
 repluginHostConfig {
     useAppCompat = true
 }
-
 
 
 repositories {
@@ -45,8 +41,8 @@ repositories {
 
 sensorsAnalytics {
     debug = true
-    //disableJar=true
-    exclude=['org.jacoco.agent','org.bouncycastle']
+    //disablePlugin = true
+    exclude = ['org.jacoco.agent', 'org.bouncycastle']
 }
 
 //sensorsAnalytics {
@@ -54,10 +50,6 @@ sensorsAnalytics {
 //    disableJar = false
 //    exclude=['com.google.protobuf.micro','com.xiaomi']
 //}
-
-
-
-
 
 //sensorsAnalytics {
 //    excludeJarFilter 'BaiduLBS_Android.'
@@ -96,7 +88,7 @@ android {
     dexOptions {
         //incremental = true;
         //preDexLibraries = false
-        javaMaxHeapSize "8g"
+        javaMaxHeapSize "4g"
     }
 
     defaultConfig {
@@ -104,7 +96,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 27
         versionCode 1
-        versionName "1.0"
+        versionName "1.2"
 
         //ARouter
         javaCompileOptions {
@@ -131,7 +123,10 @@ android {
                 //个推
                 GETUI_APP_ID    : "49nJPRDPOV6BKGVSYIeU45",
                 GETUI_APP_KEY   : "B5SOup4JHu6ltY4oOYjGP1",
-                GETUI_APP_SECRET: "OUgQ0Uo6bqAdou2BOxk1F"
+                GETUI_APP_SECRET: "OUgQ0Uo6bqAdou2BOxk1F",
+                //信鸽
+                XG_ACCESS_ID    : "2100343387",
+                XG_ACCESS_KEY   : "A3PY9Q74JK4G",
         ]
 
 //        //gio
@@ -244,7 +239,6 @@ dependencies {
     })
 
     //xiaomi
-    //implementation files('libs/MiPush_SDK_Client_3_2_1.jar')
     implementation files('libs/MiPush_SDK_Client_3_6_9.jar')
 
     //添加 Sensors Analytics SDK 依赖
@@ -255,10 +249,10 @@ dependencies {
 
     //    }
 
-    //compile 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:1.8.10'
-    implementation 'com.sensorsdata.analytics.android:TestSDK:2.1.2'
+    //implementation 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:3.1.4'
+    //implementation 'com.sensorsdata.analytics.android:TestSDK:2.1.2'
 
-    //implementation(name: 'SensorsAnalyticsSDK-release', ext: 'aar')
+    implementation(name: 'SensorsAnalyticsSDK-release', ext: 'aar')
 
     //crashlytics
     implementation('com.crashlytics.sdk.android:crashlytics:2.6.5@aar') {
@@ -314,18 +308,18 @@ dependencies {
     //implementation 'com.android.support:appcompat-v7:27.1.1'
 
     //compile 'com.android.support:support-v4:23.0.0'
-//    implementation 'cn.jiguang.sdk:jpush:3.0.0'
-//    implementation 'cn.jiguang.sdk:jcore:1.0.0'
+    implementation 'cn.jiguang.sdk:jpush:3.3.2'
+    implementation 'cn.jiguang.sdk:jcore:2.1.0'
 
-    implementation 'cn.jiguang.sdk:jpush:3.1.6'
-    implementation 'cn.jiguang.sdk:jcore:1.2.5'
+//    implementation 'cn.jiguang.sdk:jpush:3.1.6'
+//    implementation 'cn.jiguang.sdk:jcore:1.2.5'
     //compile 'com.umeng.sdk:common:latest.integration'
 
     //compile 'com.umeng.sdk:analytics:latest.integration'
 
     //compile 'com.umeng.analytics:analytics:latest.integration'
     //implementation 'com.getui:sdk:2.10.2.0'
-   //ge tui
+    //ge tui
     implementation 'com.getui:sdk:2.12.5.0'
 
 
@@ -340,8 +334,14 @@ dependencies {
     //    annotationProcessor 'com.jakewharton:butterknife-compiler:8.7.0'
     implementation 'com.alibaba:arouter-api:1.2.1.1'
     implementation 'me.yokeyword:fragmentation:1.0.7'
-    implementation 'com.growingio.android:vds-android-agent:1.1.8@aar'
+
+    //implementation 'com.growingio.android:vds-android-agent:1.1.8@aar'
+    //GrowingIO 无埋点 SDK
+    implementation 'com.growingio.android:vds-android-agent:autotrack-2.7.5@aar'
+
+
     implementation 'com.yanzhenjie:permission:1.1.0'
+    //implementation 'com.yanzhenjie.permission:support:2.0.1'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
     annotationProcessor 'com.alibaba:arouter-compiler:1.1.2.1'
@@ -354,9 +354,6 @@ dependencies {
     //compile 'com.github.GrenderG:Toasty:1.2.5'
 
     //compile 'org.aspectj:aspectjrt:1.8.10'
-    implementation files('libs/umeng-analytics-7.4.4.jar')
-    implementation files('libs/umeng-common-1.4.4.jar')
-    implementation files('libs/umerror_android_1.0.0.jar')
 
     //RePlugin
     implementation 'com.qihoo360.replugin:replugin-host-lib:2.2.4'
@@ -383,12 +380,32 @@ dependencies {
     implementation 'com.yanzhenjie:andserver:1.1.4'
 
     //侧滑
-    compile 'cn.bingoogolapple:bga-swipebacklayout:1.2.0'
+    implementation 'cn.bingoogolapple:bga-swipebacklayout:1.2.0'
 
     // RSA 加密需要的库,后端提供的版本
-    compile 'org.bouncycastle:bcpkix-jdk15on:1.55'
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.55'
 
+    // umeng
+    //PushSDK必须依赖基础组件库，所以需要加入对应依赖
+    implementation 'com.umeng.umsdk:common:1.5.4'
+    //PushSDK必须依赖utdid库，所以需要加入对应依赖
+    implementation 'com.umeng.umsdk:utdid:1.1.5.3'
+    //PushSDK
+    implementation 'com.umeng.umsdk:push:6.0.1'
 
+    //小米Push通道 小米推送已经有了不需要加
+    //implementation 'com.umeng.umsdk:xiaomi-push:3.6.17'
+    implementation 'com.umeng.umsdk:xiaomi-umengaccs:1.1.0'
+
+    //
+    //信鸽jar，不包含厂商通道
+    implementation 'com.tencent.xinge:xinge:4.3.5-release'
+    //jg包
+    implementation 'com.tencent.jg:jg:1.1'
+    //wup包
+    implementation 'com.tencent.wup:wup:1.0.0.E-Release'
+    //mid包，minSdkVersion 14
+    implementation 'com.tencent.mid:mid:4.0.7-Release'
 }
 
 //----------crashlytics-----------

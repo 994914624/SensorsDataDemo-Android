@@ -2,79 +2,57 @@ package cn.sensorsdata.demo;
 
 import android.annotation.TargetApi;
 import android.app.ActionBar;
-import android.app.Activity;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Build;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.alibaba.android.arouter.facade.annotation.Route;
-import com.igexin.sdk.PushManager;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
-import com.sensorsdata.analytics.android.sdk.SensorsDataAutoTrackAppViewScreenUrl;
-import com.sensorsdata.analytics.android.sdk.SensorsDataTrackViewOnClick;
-import com.xiaomi.mipush.sdk.MiPushClient;
+import com.umeng.message.PushAgent;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import cn.jpush.android.api.JPushInterface;
-import cn.sensorsdata.demo.util.SFUtils;
 
 
-/**
- * 极光推送 Activity
- */
-@Route(path = "/jiguangpush/activity")
-@SensorsDataAutoTrackAppViewScreenUrl(url="xxx.jg页面")
-public class JiguangPushActivity extends BaseActivity {
+public class UmengActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_jpush);
+        setContentView(R.layout.activity_umeng2);
+
         if(Build.VERSION.SDK_INT>14)setActionBar();
         initView();
 
         try {
             JSONObject properties = new JSONObject();
-            properties.put("jgAndroidId", JPushInterface.getRegistrationID(this)+"");
+            properties.put("umengId", PushAgent.getInstance(this).getRegistrationId()+"");
             // 设置用户 Profile
             SensorsDataAPI.sharedInstance().profileSet(properties);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        // intent 中如果有有 sf_data 则触发，App 点击推送消息事件
-//        Intent intent = getIntent();
-//        String data = getIntent().getExtras().getString("JMessageExtra");
-//        SFUtils.trackAppOpenNotification(intent,"","");
-
     }
-
-
 
 
     /**
      * 初始化View
      */
     private void initView() {
-        TextView textView= (TextView) findViewById(R.id.textView_JiguangPushActivity);
+        TextView textView= (TextView) findViewById(R.id.tv_umeng);
         //极光推送的RegistrationID
-        if(TextUtils.isEmpty(JPushInterface.getRegistrationID(this))){
-            textView.setText("极光推送初始化失败");
+        if(TextUtils.isEmpty(PushAgent.getInstance(this).getRegistrationId())){
+            textView.setText("友盟推送初始化失败");
 
         }else {
-            textView.setText(JPushInterface.getRegistrationID(this)+"");
-            Log.i("getRegId_jg:",JPushInterface.getRegistrationID(this)+"");
+            textView.setText(String.format("%s", PushAgent.getInstance(this).getRegistrationId()));
+            Log.i("umeng_jg:",PushAgent.getInstance(this).getRegistrationId()+"");
 
         }
     }
@@ -85,7 +63,7 @@ public class JiguangPushActivity extends BaseActivity {
     @TargetApi(18)
     private void setActionBar(){
         ActionBar actionBar=getActionBar();
-        actionBar.setTitle("极光推送");
+        actionBar.setTitle("友盟推送");
         // 设置不显示左侧图标
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayHomeAsUpEnabled(true);

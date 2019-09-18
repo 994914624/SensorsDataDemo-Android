@@ -46,7 +46,7 @@ public class VTActivity extends BaseActivity implements View.OnClickListener, Co
         initView();
         openVTtack();
         //由于此页面演示可视化埋点，所以忽略此页面的全埋点采集
-       SensorsDataAPI.sharedInstance(this).ignoreAutoTrackActivity(VTActivity.class);
+       //SensorsDataAPI.sharedInstance(this).ignoreAutoTrackActivity(VTActivity.class);
     }
 
     /**
@@ -81,9 +81,9 @@ public class VTActivity extends BaseActivity implements View.OnClickListener, Co
             @Override
             public void afterTextChanged(Editable s) {
 
-                Toast.makeText(VTActivity.this, "" +
-                        "如果你已在网页上埋点并部署成功" +
-                        "点击后，会尝试向Sensors Analytics发送track事件\n" , Toast.LENGTH_LONG).show();
+//                Toast.makeText(VTActivity.this, "" +
+//                        "如果你已在网页上埋点并部署成功" +
+//                        "点击后，会尝试向Sensors Analytics发送track事件\n" , Toast.LENGTH_LONG).show();
             }
         });
 
@@ -122,9 +122,9 @@ public class VTActivity extends BaseActivity implements View.OnClickListener, Co
      */
     @Override
     public void onClick(View v) {
-        Toast.makeText(VTActivity.this, "" +
-                "如果你已在网页上埋点并部署成功" +
-                "点击后，会尝试向Sensors Analytics发送track事件\n" , Toast.LENGTH_LONG).show();
+//        Toast.makeText(VTActivity.this, "" +
+//                "如果你已在网页上埋点并部署成功" +
+//                "点击后，会尝试向Sensors Analytics发送track事件\n" , Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -132,9 +132,9 @@ public class VTActivity extends BaseActivity implements View.OnClickListener, Co
      */
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        Toast.makeText(VTActivity.this, "" +
-                "如果你已在网页上埋点并部署成功" +
-                "点击后，会尝试向Sensors Analytics发送track事件\n" , Toast.LENGTH_LONG).show();
+//        Toast.makeText(VTActivity.this, "" +
+//                "如果你已在网页上埋点并部署成功" +
+//                "点击后，会尝试向Sensors Analytics发送track事件\n" , Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -143,7 +143,7 @@ public class VTActivity extends BaseActivity implements View.OnClickListener, Co
     @TargetApi(11)
     private void setActionBar(){
         ActionBar actionBar=getActionBar();
-        actionBar.setTitle("可视化埋点");
+        actionBar.setTitle("可视化全埋点");
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayHomeAsUpEnabled(true);
         int titleId = Resources.getSystem().getIdentifier("action_bar_title",

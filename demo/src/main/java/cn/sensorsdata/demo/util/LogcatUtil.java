@@ -32,7 +32,7 @@ import java.util.Map;
  * Created by yzk on 2018/8/17
  * <p>
  * 每次冷启动时，开始抓日志（抓日志之前，会删除之前的日志文件），默认 App 进入后台时，停止抓日志。
- * 如果有 sdcard 读写权限，日志存储在 /sdcard/MyLog/ 目录下，否则存储在 /包名/files/MyLog/ 目录下。
+ * 如果有 sdcard 读写权限，日志存储在 /sdcard/111_My_log/ 目录下，否则存储在 /包名/files/111_My_log/ 目录下。
  *
  * 使用：
  *  AndroidManifest 中添加 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

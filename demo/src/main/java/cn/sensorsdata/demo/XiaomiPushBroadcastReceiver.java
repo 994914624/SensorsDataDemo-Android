@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -15,6 +16,9 @@ import com.xiaomi.mipush.sdk.MiPushMessage;
 import com.xiaomi.mipush.sdk.PushMessageReceiver;
 
 import org.json.JSONObject;
+
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by yang on 2017/1/19.
@@ -30,7 +34,7 @@ public class XiaomiPushBroadcastReceiver extends PushMessageReceiver {
         handler = handle;
     }
 
-   private static final String TAG = "__xiao mi__";
+   private static final String TAG = "__小米推送__";
     private static final String TXT = "----------------------- 小米推送 ---------------------------\n";
     /**
      * 用来接收服务器发来的通知栏消息
@@ -68,32 +72,19 @@ public class XiaomiPushBroadcastReceiver extends PushMessageReceiver {
      */
     @Override
     public void onNotificationMessageClicked(Context context, MiPushMessage message) {
+//        Message msg = Message.obtain();
+//        Bundle bundle = new Bundle();
+//        bundle.putString("msg_title", message.getTitle());
+//        bundle.putString("msg_id", message.getMessageId());
+//        msg.obj = bundle;
+//        msg.what = 2;//用 2 标识用户打开消息
+//        handler.sendMessage(msg);
 
-        Message msg = Message.obtain();
-        Bundle bundle = new Bundle();
-        bundle.putString("msg_title_xm", message.getTitle());
-        bundle.putString("msg_id_xm", message.getMessageId());
-        msg.obj = bundle;
-        msg.what = 2;//用 2 标识用户打开消息
-        handler.sendMessage(msg);
-        Log.i(TAG,"onNotificationMessageClicked:"+TXT);
-        try {
+        // 埋点 "App 打开推送消息" 事件
+        trackAppOpenNotification(message.getExtra(),message.getTitle(),message.getDescription());
 
-            JSONObject properties = new JSONObject();
-            // 获取消息标题，并保存在事件属性 msg_title 中
-            properties.put("msg_title_xm", message.getTitle());
-            // 获取消息 ID，并保存在事件属性 msg_id 中
-            properties.put("msg_id_xm", message.getMessageId());
-            // 追踪 "App 推送消息打开" 事件
-            SensorsDataAPI.sharedInstance(context).track("AppOpenNotification_xm", properties);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-//
-//        Intent intent=new Intent(context,XiaomiPushActivity.class);
-//        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        context.startActivity(intent);
+        Log.i(TAG,"onNotificationMessageClicked: getTitle:"+ message.getTitle()+"、getDescription:"+message.getDescription()+" 、 getTopic:" + message.getTopic()+"、getCategory:" + message.getCategory()+
+                "、getContent:"+ message.getContent()+"、getExtra:"  +message.getExtra().toString());
 
     }
 
@@ -105,14 +96,56 @@ public class XiaomiPushBroadcastReceiver extends PushMessageReceiver {
 
         Message msg = Message.obtain();
         Bundle bundle = new Bundle();
-        bundle.putString("msg_content_xm", message.getContent());
+        bundle.putString("msg_content", message.getContent());
         msg.obj = bundle;
         msg.what = 3;//用 3 标识用户收到自定义(透传)消息
         handler.sendMessage(msg);
-        Log.i(TAG,"onReceivePassThroughMessage:"+TXT);
+        Log.i(TAG,"onReceivePassThroughMessage:"+message.getContent()+"   - "+message.getExtra().toString());
+
+    }
+
+
+    /**
+     * 埋点 App 打开推送消息
+     * <p>
+     * 事件名：AppOpenNotification
+     *
+     * @param notificationExtras  推送消息 notificationExtras
+     * @param notificationTitle   推送消息的标题
+     * @param notificationContent 推送消息的内容
+     */
+    public static void trackAppOpenNotification(Map notificationExtras, String notificationTitle, String notificationContent) {
         try {
-            // 追踪 "App 收到自定义(透传)消息" 事件
-            SensorsDataAPI.sharedInstance(context).track("AppReceivedMessage_xm");
+            JSONObject properties = new JSONObject();
+            // 推送消息的标题
+            properties.put("$sf_msg_title", notificationTitle);
+            // 推送消息的内容
+            properties.put("$sf_msg_content", notificationContent);
+            try {
+                String sfData = new JSONObject(notificationExtras).optString("sf_data");
+                if (!TextUtils.isEmpty(sfData)) {
+                    JSONObject sfJson = new JSONObject(sfData);
+                    // 推送消息中 SF 的内容
+                    properties.put("$sf_msg_id", sfJson.optString("sf_msg_id", null));
+                    properties.put("$sf_plan_id", sfJson.optString("sf_plan_id", null));
+                    properties.put("$sf_audience_id", sfJson.optString("sf_audience_id", null));
+                    properties.put("$sf_link_url", sfJson.optString("sf_link_url", null));
+                    properties.put("$sf_plan_name", sfJson.optString("sf_plan_name", null));
+                    properties.put("$sf_plan_strategy_id", sfJson.optString("sf_plan_strategy_id", null));
+                    JSONObject customized = sfJson.optJSONObject("customized");
+                    if (customized != null) {
+                        Iterator<String> iterator = customized.keys();
+                        while (iterator.hasNext()) {
+                            String key = iterator.next();
+                            properties.put(key, customized.opt(key));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // 追踪 "App 打开推送消息" 事件
+            SensorsDataAPI.sharedInstance().track("AppOpenNotification", properties);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -124,7 +157,14 @@ public class XiaomiPushBroadcastReceiver extends PushMessageReceiver {
      */
     @Override
     public void onReceiveRegisterResult(Context context, MiPushCommandMessage message) {
-        Log.i(TAG,"onReceiveRegisterResult:"+TXT);
+        Log.i(TAG,"onReceiveRegisterResult:"+ TXT + MiPushClient.getRegId(context));
+
+        //
+        // 将推送 ID 保存到用户表 xmId 中（这里的 xmId 只是一个示例字段）
+        SensorsDataAPI.sharedInstance().profilePushId("xmId",MiPushClient.getRegId(context));
+
+
+
         String command = message.getCommand();
         if (MiPushClient.COMMAND_REGISTER.equals(command)) {
 
@@ -135,15 +175,6 @@ public class XiaomiPushBroadcastReceiver extends PushMessageReceiver {
             msg.what = 4;//用 4 标识注册成功
             if (message.getResultCode() == ErrorCode.SUCCESS) {
                 //小米推送初注册成功
-                try {
-                    JSONObject properties = new JSONObject();
-                    // 将用户 Profile "xmAndroidId" 设为 registrationId
-                    properties.put("xmAndroidId", MiPushClient.getRegId(context)+"");
-                    // 设置用户 Profile
-                    SensorsDataAPI.sharedInstance(context).profileSet(properties);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
 
             }
             handler.sendMessage(msg);

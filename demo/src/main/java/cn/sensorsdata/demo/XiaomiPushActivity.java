@@ -31,7 +31,7 @@ import cn.jpush.android.api.JPushInterface;
  * 小米推送 Activity
  */
 @Route(path = "/xiaomipush/activity")
-public class XiaomiPushActivity extends BaseActivity implements ScreenAutoTracker{
+public class XiaomiPushActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +42,7 @@ public class XiaomiPushActivity extends BaseActivity implements ScreenAutoTracke
 
         try {
             JSONObject properties = new JSONObject();
-            properties.put("xmAndroidId", MiPushClient.getRegId(this)+"");
+            properties.put("xmId", MiPushClient.getRegId(this)+"");
             // 设置用户 Profile
             SensorsDataAPI.sharedInstance().profileSet(properties);
         } catch (Exception e) {
@@ -103,15 +103,15 @@ public class XiaomiPushActivity extends BaseActivity implements ScreenAutoTracke
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public String getScreenUrl() {
-        return "xiaomi/activity";
-    }
-
-    @Override
-    public JSONObject getTrackProperties() throws JSONException {
-        return null;
-    }
+//    @Override
+//    public String getScreenUrl() {
+//        return "xiaomi/activity";
+//    }
+//
+//    @Override
+//    public JSONObject getTrackProperties() throws JSONException {
+//        return null;
+//    }
 
 
     /**

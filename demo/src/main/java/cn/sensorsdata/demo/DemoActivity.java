@@ -77,7 +77,7 @@ import cn.sensorsdata.demo.test.SensorsData;
 
 
 @SensorsDataAutoTrackAppViewScreenUrl(url="xxx.demo页面")
-public class DemoActivity extends AppCompatActivity implements View.OnClickListener {
+public class DemoActivity extends AppCompatActivity implements View.OnClickListener,ScreenAutoTracker {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -271,6 +271,15 @@ public class DemoActivity extends AppCompatActivity implements View.OnClickListe
         }, 6000);
     }
 
+    @Override
+    public String getScreenUrl() {
+        return this.getClass().getSimpleName();
+    }
+
+    @Override
+    public JSONObject getTrackProperties() throws JSONException {
+        return null;
+    }
 
 
     static class MainViewHolder extends RecyclerView.ViewHolder {

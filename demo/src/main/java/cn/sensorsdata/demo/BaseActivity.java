@@ -1,13 +1,21 @@
 package cn.sensorsdata.demo;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+
+import com.sensorsdata.analytics.android.sdk.ScreenAutoTracker;
+import com.umeng.message.PushAgent;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import cn.bingoogolapple.swipebacklayout.BGASwipeBackHelper;
 
-public abstract class BaseActivity extends Activity implements BGASwipeBackHelper.Delegate {
+public abstract class BaseActivity extends Activity implements BGASwipeBackHelper.Delegate,ScreenAutoTracker {
     protected BGASwipeBackHelper mSwipeBackHelper;
     protected Toolbar mToolbar;
 
@@ -17,6 +25,8 @@ public abstract class BaseActivity extends Activity implements BGASwipeBackHelpe
         // 在 super.onCreate(savedInstanceState) 之前调用该方法
         initSwipeBackFinish();
         super.onCreate(savedInstanceState);
+        //该方法是【友盟+】Push后台进行日活统计及多维度推送的必调用方法，请务必调用！
+        PushAgent.getInstance(this).onAppStart();
     }
 
     /**
@@ -87,5 +97,37 @@ public abstract class BaseActivity extends Activity implements BGASwipeBackHelpe
             return;
         }
         mSwipeBackHelper.backward();
+    }
+
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if(intent != null){
+            Log.i("onIntentNew",":"+intent.toString()+"| "+intent.getData());
+            if(intent.getExtras()!=null)
+            Log.i("onIntentNew",":"+intent.getExtras().toString());
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Intent intent = getIntent();
+        if(intent != null){
+            Log.i("onIntentNew","base:"+intent.toString()+"| "+intent.getData()+"| "+intent.getDataString());
+            if(intent.getExtras()!=null)
+                Log.i("onIntentNew","base:"+intent.getExtras().toString());
+        }
+    }
+
+    @Override
+    public String getScreenUrl() {
+        return this.getClass().getSimpleName();
+    }
+
+    @Override
+    public JSONObject getTrackProperties() throws JSONException {
+        return null;
     }
 }

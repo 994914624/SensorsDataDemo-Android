@@ -76,7 +76,7 @@ public  abstract class BaseFragment extends Fragment implements ScreenAutoTracke
 
     @Override
     public String getScreenUrl() {
-        return this.getClass().getCanonicalName();
+        return this.getClass().getSimpleName();
     }
 
     @Override

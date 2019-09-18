@@ -26,6 +26,7 @@
             android:src="@mipmap/sensorsdata" />
 
         <EditText
+            android:visibility="gone"
             android:id="@+id/editText_vt"
             android:layout_width="match_parent"
             android:layout_height="50dp"

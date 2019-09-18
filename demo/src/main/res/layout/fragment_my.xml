@@ -46,6 +46,7 @@
                     android:layout_weight="1"
                     android:button="@null"
                     android:gravity="center"
+                    android:checked="true"
                     android:text="轮次分布" />
 
                 <RadioButton

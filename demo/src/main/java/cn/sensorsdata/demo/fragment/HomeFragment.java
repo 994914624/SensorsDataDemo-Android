@@ -32,18 +32,13 @@ import me.yokeyword.fragmentation.SupportFragment;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class HomeFragment extends BaseFragment implements ScreenAutoTracker{
+public class HomeFragment extends BaseFragment  {
 
 
-    @Override
-    public String getScreenUrl() {
-        return null;
-    }
 
-    @Override
-    public JSONObject getTrackProperties() throws JSONException {
-        return new JSONObject().put("$title","具体的标题");
-    }
+
+
+
 
 
     private View view = null;

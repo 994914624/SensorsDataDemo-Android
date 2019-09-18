@@ -29,6 +29,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -41,8 +42,9 @@ import com.qihoo360.replugin.RePlugin;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.exceptions.InvalidDataException;
 import com.sensorsdata.analytics.android.sdk.util.SensorsDataUtils;
-import com.umeng.analytics.MobclickAgent;
 
+
+import com.umeng.message.PushAgent;
 import com.yanzhenjie.andserver.AndServer;
 import com.yanzhenjie.permission.AndPermission;
 import com.yanzhenjie.permission.Permission;
@@ -60,7 +62,9 @@ import java.util.Map;
 import cn.jpush.android.api.JPushInterface;
 import cn.sensorsdata.demo.constant.SeverURLConfig;
 import cn.sensorsdata.demo.fragmentation.FragmentationActivity;
+import cn.sensorsdata.demo.test.SensorsData;
 import cn.sensorsdata.demo.test.YangRecycleViewActivity;
+import cn.sensorsdata.demo.util.SFUtils;
 import cn.sensorsdata.demo.util.SensorsDataUtil;
 import cn.sensorsdata.demo.yang.BaseViewActivity;
 import cn.sensorsdata.demo.yang.KotlinActivity;
@@ -80,7 +84,7 @@ import es.dmoral.toasty.Toasty;
  * 主页面 MainActivity。
  */
 @Route(path = "/main/activity")
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
     private int num = 0;
@@ -95,12 +99,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         this.setTitle("首页");
 
-        Log.d("SA.Sensors","MainActivity  onCreate");
-
- //Toasty.success(this, "welcome").show();
-
-        //友盟
-        //startActivity(new Intent(this, KotlinActivity.class));
+        Log.d("SA.Sensors","MainActivity  onCreate: "+ PushAgent.getInstance(this).getRegistrationId());
+        SensorsDataAPI.sharedInstance().profilePushId("isNotificationOpen",""+ SFUtils.isNotificationOpen(this));
 
         //requestPermission();
         permission();
@@ -109,11 +109,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         //RePlugin External apk
         //RePlugin.install("/sdcard/testExternalRePlugin.apk");
-
-        //dialog1();
-//        MyDialogFragment fragment= new MyDialogFragment ();
-//
-//        fragment.show(getFragmentManager(), "MyDialogment");
 
 
 
@@ -145,6 +140,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         TextView jPush = (TextView) findViewById(R.id.textView_jg);
         TextView xmPush = (TextView) findViewById(R.id.textView_xm);
         TextView gtPush = (TextView) findViewById(R.id.textView_gt);
+        TextView umeng = (TextView) findViewById(R.id.textView_umeng);
+        TextView xinge = (TextView) findViewById(R.id.textView_xinge);
         TextView demo = (TextView) findViewById(R.id.textView_yang);
         code.setOnClickListener(this);
         vt.setOnClickListener(this);
@@ -152,6 +149,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         jPush.setOnClickListener(this);
         xmPush.setOnClickListener(this);
         gtPush.setOnClickListener(this);
+        umeng.setOnClickListener(this);
+        xinge.setOnClickListener(this);
 
         //demo 测试模块
         if (true) {
@@ -229,6 +228,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.textView_gt:
                 //ARouter.getInstance().build("/getui/activity").navigation();
                 intent.setClass(this, GeTuiActivity.class);
+                break;
+            case R.id.textView_umeng:
+                intent.setClass(this, UmengActivity.class);
+                break;
+            case R.id.textView_xinge:
+                intent.setClass(this, XinGePushActivity.class);
                 break;
 //            case R.id.textView_yang:
 //
@@ -523,11 +528,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onResume() {
         super.onResume();
         Log.d("SA.Sensors","MainActivity  onResume");
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
 
         //SensorsDataUtil.profilePushId("jgId",JPushInterface.getRegistrationID(this),this);
 
